@@ -5,12 +5,20 @@
  * Maps the AI extraction output and flashes auto-filled fields.
  */
 
-import { Trash2, Plus, X } from 'lucide-react'
+import { Trash2, Plus, X, Check } from 'lucide-react'
 
-function SectionHeader({ children }) {
+function SectionHeader({ children, filled }) {
   return (
-    <div className="bg-navy text-white px-3 py-1.5 rounded-t-md">
+    <div className="bg-navy text-white px-3 py-1.5 rounded-t-md flex items-center justify-between">
       <span className="text-[11px] font-bold tracking-wider uppercase">{children}</span>
+      <span
+        title={filled ? 'Filled' : 'Empty'}
+        className={`flex items-center justify-center w-4 h-4 rounded-full transition-colors ${
+          filled ? 'bg-emerald-500' : 'bg-slate-600 border border-slate-500'
+        }`}
+      >
+        {filled && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
+      </span>
     </div>
   )
 }
@@ -60,7 +68,7 @@ export default function SmartForm({ form, setForm, flashFields }) {
     <div className="space-y-4 max-w-4xl mx-auto">
       {/* Chief Complaints */}
       <div className="bg-white border border-slate-200 rounded-md shadow-sm overflow-hidden">
-        <SectionHeader>Chief Complaints</SectionHeader>
+        <SectionHeader filled={!!form.complaints.trim()}>Chief Complaints</SectionHeader>
         <div className={`p-3 ${flashClass(flashFields.complaints)}`}>
           <textarea
             value={form.complaints}
@@ -73,7 +81,7 @@ export default function SmartForm({ form, setForm, flashFields }) {
 
       {/* Diagnosis */}
       <div className="bg-white border border-slate-200 rounded-md shadow-sm overflow-hidden">
-        <SectionHeader>Diagnosis</SectionHeader>
+        <SectionHeader filled={!!form.diagnosis.trim()}>Diagnosis</SectionHeader>
         <div className={`p-3 ${flashClass(flashFields.diagnosis)}`}>
           <textarea
             value={form.diagnosis}
@@ -86,7 +94,7 @@ export default function SmartForm({ form, setForm, flashFields }) {
 
       {/* Medicines */}
       <div className="bg-white border border-slate-200 rounded-md shadow-sm overflow-hidden">
-        <SectionHeader>Medicines</SectionHeader>
+        <SectionHeader filled={form.medicines.length > 0}>Medicines</SectionHeader>
         <div className={`p-3 ${flashClass(flashFields.medicines)}`}>
           {form.medicines.length === 0 ? (
             <div className="text-xs italic text-slate-400 py-2 text-center">
@@ -170,7 +178,7 @@ export default function SmartForm({ form, setForm, flashFields }) {
 
       {/* Lab Tests / Investigations */}
       <div className="bg-white border border-slate-200 rounded-md shadow-sm overflow-hidden">
-        <SectionHeader>Lab Tests / Investigations</SectionHeader>
+        <SectionHeader filled={form.labs.length > 0}>Lab Tests / Investigations</SectionHeader>
         <div className={`p-3 ${flashClass(flashFields.labs)}`}>
           <div className="flex flex-wrap gap-1.5 mb-2 min-h-[24px]">
             {form.labs.length === 0 ? (
@@ -204,7 +212,7 @@ export default function SmartForm({ form, setForm, flashFields }) {
 
       {/* Advisory / Notes */}
       <div className="bg-white border border-slate-200 rounded-md shadow-sm overflow-hidden">
-        <SectionHeader>Advisory / Notes</SectionHeader>
+        <SectionHeader filled={!!form.notes.trim()}>Advisory / Notes</SectionHeader>
         <div className={`p-3 ${flashClass(flashFields.notes)}`}>
           <textarea
             value={form.notes}

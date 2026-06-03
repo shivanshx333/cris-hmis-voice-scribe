@@ -1,23 +1,57 @@
 /**
  * DictationHub.jsx
  * ================
- * Voice dictation + live transcript + processing trigger.
- *
- * Uses the browser's Web Speech API for real-time transcription.
- * Falls back to manual typing if the API is unavailable.
+ * Voice dictation hub:
+ *  - Web Speech API for real-time transcription
+ *  - Live audio level visualization while recording
+ *  - Quick prescription template buttons for demos
+ *  - Process Transcript runs the in-browser regex extractor
  */
 
 import { useState, useEffect, useRef } from 'react'
-import { Mic, MicOff, Wand2, AlertCircle, Loader2 } from 'lucide-react'
+import {
+  Mic, MicOff, Wand2, AlertCircle, Loader2, FileText,
+  Thermometer, Activity, Droplets,
+} from 'lucide-react'
 import { extract } from './extractor.js'
 
-export default function DictationHub({ transcript, setTranscript, onExtracted }) {
+// --------------------------------------------------------------------------
+// Sample templates — for demo / quick fill (subtle, hidden behind icons)
+// --------------------------------------------------------------------------
+const TEMPLATES = [
+  {
+    id: 'fever',
+    icon: Thermometer,
+    label: 'Fever / Cold',
+    text: 'Patient presenting with fever and cough for 3 days, body ache and runny nose. Diagnosed with viral upper respiratory infection. Prescribed Paracetamol 500mg 1-0-1 for 5 days and Cetirizine 10mg 0-0-1 for 5 days. Advised CBC and rest.',
+  },
+  {
+    id: 'bp',
+    icon: Activity,
+    label: 'Hypertension',
+    text: 'Patient presenting with headache and dizziness, c/o elevated blood pressure. Diagnosed with Stage 1 Hypertension. Prescribed Amlodipine 5mg 1-0-0 for 30 days and Telmisartan 40mg 0-0-1 for 30 days. Advised ECG, Lipid Profile, KFT and follow-up in 4 weeks.',
+  },
+  {
+    id: 'diabetes',
+    icon: Droplets,
+    label: 'Diabetes',
+    text: 'Patient presenting with increased thirst, frequent urination and fatigue. Diagnosed with Type 2 Diabetes Mellitus. Prescribed Metformin 500mg 1-0-1 for 30 days. Advised HbA1c, FBS, PPBS, KFT and dietary counseling.',
+  },
+]
+
+export default function DictationHub({ transcript, setTranscript, onExtracted, recordTrigger }) {
   const [isRecording, setIsRecording] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [status, setStatus] = useState('Tap to Dictate')
   const [speechSupported, setSpeechSupported] = useState(true)
+  const [audioLevels, setAudioLevels] = useState([0, 0, 0, 0, 0, 0, 0, 0])
+
   const recognitionRef = useRef(null)
   const finalTextRef = useRef('')
+  const audioContextRef = useRef(null)
+  const analyserRef = useRef(null)
+  const mediaStreamRef = useRef(null)
+  const animationFrameRef = useRef(null)
 
   // ----------------------------------------------------------------------
   // Initialize Web Speech API
@@ -47,7 +81,6 @@ export default function DictationHub({ transcript, setTranscript, onExtracted })
     }
 
     recognition.onend = () => {
-      // Auto-restart while user wants to keep recording
       if (recognitionRef.current?._wantsToRun) {
         try { recognition.start() } catch (e) {}
       }
@@ -63,8 +96,59 @@ export default function DictationHub({ transcript, setTranscript, onExtracted })
     recognitionRef.current = recognition
     return () => {
       try { recognition.stop() } catch (e) {}
+      stopAudioAnalyzer()
     }
   }, [])
+
+  // External trigger (e.g., Space keyboard shortcut)
+  useEffect(() => {
+    if (recordTrigger === undefined) return
+    toggleRecording()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recordTrigger])
+
+  // ----------------------------------------------------------------------
+  // Audio-level visualization
+  // ----------------------------------------------------------------------
+  const startAudioAnalyzer = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      mediaStreamRef.current = stream
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+      const analyser = audioCtx.createAnalyser()
+      analyser.fftSize = 64
+      const source = audioCtx.createMediaStreamSource(stream)
+      source.connect(analyser)
+      audioContextRef.current = audioCtx
+      analyserRef.current = analyser
+
+      const data = new Uint8Array(analyser.frequencyBinCount)
+      const tick = () => {
+        analyser.getByteFrequencyData(data)
+        // Sample 8 evenly-spaced bins for the bar visualization
+        const bars = []
+        const step = Math.floor(data.length / 8)
+        for (let i = 0; i < 8; i++) {
+          bars.push(Math.min(100, (data[i * step] / 255) * 100))
+        }
+        setAudioLevels(bars)
+        animationFrameRef.current = requestAnimationFrame(tick)
+      }
+      tick()
+    } catch (e) {
+      // Mic blocked — silently skip waveform; speech recognition will still work
+    }
+  }
+
+  const stopAudioAnalyzer = () => {
+    if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current)
+    if (mediaStreamRef.current) mediaStreamRef.current.getTracks().forEach((t) => t.stop())
+    if (audioContextRef.current) audioContextRef.current.close().catch(() => {})
+    mediaStreamRef.current = null
+    audioContextRef.current = null
+    analyserRef.current = null
+    setAudioLevels([0, 0, 0, 0, 0, 0, 0, 0])
+  }
 
   // ----------------------------------------------------------------------
   // Recording control
@@ -74,6 +158,7 @@ export default function DictationHub({ transcript, setTranscript, onExtracted })
     finalTextRef.current = transcript
     recognitionRef.current._wantsToRun = true
     try { recognitionRef.current.start() } catch (e) {}
+    startAudioAnalyzer()
     setIsRecording(true)
     setStatus('Listening...')
   }
@@ -83,65 +168,82 @@ export default function DictationHub({ transcript, setTranscript, onExtracted })
       recognitionRef.current._wantsToRun = false
       try { recognitionRef.current.stop() } catch (e) {}
     }
+    stopAudioAnalyzer()
     setIsRecording(false)
     setStatus('Tap to Dictate')
   }
 
   const toggleRecording = () => {
-    if (isRecording) {
-      stopRecording()
-    } else if (speechSupported) {
-      startRecording()
-    }
+    if (isRecording) stopRecording()
+    else if (speechSupported) startRecording()
   }
 
   // ----------------------------------------------------------------------
-  // Process transcript (in-browser extraction, no backend)
+  // Process transcript through the in-browser extractor
   // ----------------------------------------------------------------------
   const processTranscript = async () => {
     const text = transcript.trim()
     if (!text) return
-
     if (isRecording) stopRecording()
     setIsProcessing(true)
     setStatus('Processing...')
-
-    // Brief delay for UX feedback, then run extraction
-    await new Promise((resolve) => setTimeout(resolve, 350))
-    const data = extract(text)
-    onExtracted(data)
-
+    await new Promise((r) => setTimeout(r, 350))
+    onExtracted(extract(text))
     setIsProcessing(false)
     setStatus('Tap to Dictate')
   }
 
+  const loadTemplate = (text) => {
+    setTranscript(text)
+    finalTextRef.current = text
+  }
+
   return (
     <div className="space-y-4">
-      {/* Mic Button */}
-      <div className="flex flex-col items-center py-3">
-        <button
-          onClick={toggleRecording}
-          disabled={!speechSupported}
-          className={`relative w-16 h-16 rounded-full flex items-center justify-center transition-colors
-            ${isRecording
-              ? 'bg-rose-600 hover:bg-rose-700 ring-2 ring-rose-300 animate-pulse'
-              : 'bg-navy hover:bg-navy-dark'}
-            ${!speechSupported ? 'opacity-50 cursor-not-allowed' : ''}
-          `}
-        >
-          {isRecording ? (
-            <MicOff className="w-7 h-7 text-white" />
-          ) : (
-            <Mic className="w-7 h-7 text-white" />
+      {/* Mic Button + audio bars */}
+      <div className="flex flex-col items-center py-2">
+        <div className="relative flex items-center gap-3">
+          <button
+            onClick={toggleRecording}
+            disabled={!speechSupported}
+            className={`relative w-16 h-16 rounded-full flex items-center justify-center transition-all
+              ${isRecording
+                ? 'bg-rose-600 hover:bg-rose-700 ring-4 ring-rose-200'
+                : 'bg-navy hover:bg-navy-dark hover:scale-105 shadow-md'}
+              ${!speechSupported ? 'opacity-50 cursor-not-allowed' : ''}
+            `}
+          >
+            {isRecording ? (
+              <MicOff className="w-7 h-7 text-white" />
+            ) : (
+              <Mic className="w-7 h-7 text-white" />
+            )}
+            {isRecording && (
+              <span className="absolute inset-0 rounded-full animate-ping bg-rose-400 opacity-30" />
+            )}
+          </button>
+
+          {/* Audio level bars */}
+          {isRecording && (
+            <div className="flex items-end gap-1 h-12">
+              {audioLevels.map((level, i) => (
+                <div
+                  key={i}
+                  className="w-1 bg-gradient-to-t from-rose-500 to-rose-300 rounded-full transition-all duration-75"
+                  style={{ height: `${Math.max(8, level * 0.4)}px` }}
+                />
+              ))}
+            </div>
           )}
-        </button>
+        </div>
+
         <div className="mt-3 text-sm font-medium text-slate-700">
           {isProcessing ? (
             <span className="flex items-center gap-1.5 text-amber-700">
               <Loader2 className="w-4 h-4 animate-spin" /> Processing...
             </span>
           ) : (
-            status
+            <span className={isRecording ? 'text-rose-700' : ''}>{status}</span>
           )}
         </div>
       </div>
@@ -156,16 +258,45 @@ export default function DictationHub({ transcript, setTranscript, onExtracted })
         </div>
       )}
 
+      {/* Quick templates */}
+      <div>
+        <div className="text-[10px] font-bold tracking-wider uppercase text-slate-500 mb-1.5">
+          Quick Templates
+        </div>
+        <div className="flex gap-1.5 flex-wrap">
+          {TEMPLATES.map((t) => {
+            const Icon = t.icon
+            return (
+              <button
+                key={t.id}
+                onClick={() => loadTemplate(t.text)}
+                className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 hover:bg-navy hover:text-white border border-slate-200 rounded-md text-[11px] font-medium text-slate-700 transition-colors"
+              >
+                <Icon className="w-3 h-3" />
+                {t.label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
       {/* Transcript textarea */}
       <div>
-        <label className="text-[11px] font-bold tracking-wider uppercase text-slate-600 block mb-1.5">
-          Live Transcript
-        </label>
+        <div className="flex items-center justify-between mb-1.5">
+          <label className="text-[11px] font-bold tracking-wider uppercase text-slate-600">
+            Live Transcript
+          </label>
+          {transcript.trim() && (
+            <span className="text-[10px] text-slate-500">
+              {transcript.trim().split(/\s+/).length} words
+            </span>
+          )}
+        </div>
         <textarea
           value={transcript}
           onChange={(e) => setTranscript(e.target.value)}
           placeholder="Patient presenting with fever and cough for 3 days, diagnosed with viral URI, prescribed paracetamol 500mg BD for 5 days..."
-          className="w-full min-h-[140px] p-3 bg-slate-50 border border-slate-300 rounded-md text-sm leading-relaxed text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-navy focus:border-navy resize-y"
+          className="w-full min-h-[120px] p-3 bg-slate-50 border border-slate-300 rounded-md text-sm leading-relaxed text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-navy focus:border-navy resize-y transition-shadow"
         />
       </div>
 
@@ -173,7 +304,7 @@ export default function DictationHub({ transcript, setTranscript, onExtracted })
       <button
         onClick={processTranscript}
         disabled={!transcript.trim() || isProcessing}
-        className="w-full flex items-center justify-center gap-2 py-2.5 bg-navy hover:bg-navy-dark text-white text-sm font-semibold rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="w-full flex items-center justify-center gap-2 py-2.5 bg-navy hover:bg-navy-dark text-white text-sm font-semibold rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-md"
       >
         {isProcessing ? (
           <Loader2 className="w-4 h-4 animate-spin" />

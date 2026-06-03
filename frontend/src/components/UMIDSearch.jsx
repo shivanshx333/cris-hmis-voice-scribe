@@ -84,32 +84,53 @@ export default function UMIDSearch({ patient, setPatient }) {
 
       {/* Selected patient card */}
       {patient && (
-        <div className="mt-3 p-3 border border-navy/20 bg-navy/5 rounded-md">
-          <div className="flex items-start justify-between mb-1">
-            <div className="flex items-center gap-2">
-              <BadgeCheck className="w-4 h-4 text-navy" />
-              <span className="text-sm font-bold text-navy">{patient.name}</span>
-            </div>
-            <button
-              onClick={clearPatient}
-              className="text-slate-400 hover:text-rose-600"
-              title="Clear patient"
+        <div className="mt-3 p-3 border border-navy/20 bg-gradient-to-br from-navy/5 to-navy/10 rounded-md animate-fade-in">
+          <div className="flex items-start gap-3">
+            {/* Avatar with initials */}
+            <div
+              className={`w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-sm ${
+                patient.sex === 'F' ? 'bg-rose-500' : 'bg-navy'
+              }`}
             >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs mt-2">
-            <div>
-              <span className="text-slate-500">UMID:</span>{' '}
-              <span className="font-mono text-slate-800">{patient.umid}</span>
+              {patient.name
+                .split(' ')
+                .map((p) => p[0])
+                .join('')
+                .slice(0, 2)
+                .toUpperCase()}
             </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <BadgeCheck className="w-4 h-4 text-navy flex-shrink-0" />
+                  <span className="text-sm font-bold text-navy truncate">{patient.name}</span>
+                </div>
+                <button
+                  onClick={clearPatient}
+                  className="text-slate-400 hover:text-rose-600 flex-shrink-0"
+                  title="Clear patient"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="text-[10px] font-mono text-slate-500 mt-0.5">{patient.umid}</div>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs mt-3 pt-3 border-t border-navy/10">
             <div>
               <span className="text-slate-500">Age/Sex:</span>{' '}
-              <span className="text-slate-800">{patient.age}Y / {patient.sex}</span>
+              <span className="text-slate-800 font-medium">{patient.age}Y / {patient.sex}</span>
+            </div>
+            <div>
+              <span className="text-slate-500">Status:</span>{' '}
+              <span className="inline-flex items-center gap-1 text-emerald-700 font-medium">
+                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
+                Active
+              </span>
             </div>
             <div className="col-span-2">
-              <span className="text-slate-500">Designation:</span>{' '}
-              <span className="text-slate-800">{patient.designation}</span>
+              <span className="text-slate-500">Role:</span>{' '}
+              <span className="text-slate-800 font-medium">{patient.designation}</span>
             </div>
             <div className="col-span-2">
               <span className="text-slate-500">Unit:</span>{' '}

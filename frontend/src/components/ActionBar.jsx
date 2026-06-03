@@ -4,10 +4,10 @@
  * Bottom sticky bar with Clear, Print, and Save actions.
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Eraser, Printer, Save, CheckCircle2 } from 'lucide-react'
 
-export default function ActionBar({ form, patient, transcript, onClear }) {
+export default function ActionBar({ form, patient, transcript, onClear, saveRef }) {
   const [toast, setToast] = useState(null)
 
   const handlePrint = () => window.print()
@@ -42,6 +42,12 @@ export default function ActionBar({ form, patient, transcript, onClear }) {
     setTimeout(() => setToast(null), 3500)
   }
 
+  // Expose save handler so global keyboard shortcuts can invoke it
+  useEffect(() => {
+    if (saveRef) saveRef.current = handleSave
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  })
+
   return (
     <>
       <div className="no-print border-t border-slate-200 bg-white px-6 py-3 flex items-center justify-end gap-2">
@@ -71,7 +77,7 @@ export default function ActionBar({ form, patient, transcript, onClear }) {
       {/* Toast */}
       {toast && (
         <div
-          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 rounded-md shadow-lg text-sm font-medium border
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 rounded-md shadow-lg text-sm font-medium border animate-slide-up
             ${toast.type === 'success'
               ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
               : 'bg-rose-50 text-rose-800 border-rose-300'}
