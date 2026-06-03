@@ -9,7 +9,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Mic, MicOff, Wand2, AlertCircle, Loader2 } from 'lucide-react'
-import { mockExtract } from './mockExtract.js'
+import { extract } from './extractor.js'
 
 export default function DictationHub({ transcript, setTranscript, onExtracted }) {
   const [isRecording, setIsRecording] = useState(false)
@@ -96,7 +96,7 @@ export default function DictationHub({ transcript, setTranscript, onExtracted })
   }
 
   // ----------------------------------------------------------------------
-  // Process transcript through backend (with mock fallback)
+  // Process transcript (in-browser extraction, no backend)
   // ----------------------------------------------------------------------
   const processTranscript = async () => {
     const text = transcript.trim()
@@ -106,23 +106,13 @@ export default function DictationHub({ transcript, setTranscript, onExtracted })
     setIsProcessing(true)
     setStatus('Processing...')
 
-    try {
-      const response = await fetch('/api/extract', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transcript: text }),
-      })
-      if (!response.ok) throw new Error('backend failed')
-      const data = await response.json()
-      onExtracted(data)
-    } catch (e) {
-      // Fallback: offline mock extraction
-      const mockData = await mockExtract(text)
-      onExtracted(mockData)
-    } finally {
-      setIsProcessing(false)
-      setStatus('Tap to Dictate')
-    }
+    // Brief delay for UX feedback, then run extraction
+    await new Promise((resolve) => setTimeout(resolve, 350))
+    const data = extract(text)
+    onExtracted(data)
+
+    setIsProcessing(false)
+    setStatus('Tap to Dictate')
   }
 
   return (

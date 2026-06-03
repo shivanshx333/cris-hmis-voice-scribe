@@ -2,30 +2,33 @@
 
 A voice-to-structured-data web application for the Centre for Railway Information Systems (CRIS), Ministry of Railways. Doctors dictate prescriptions and the app auto-fills a structured medical encounter form.
 
+## Live Demo
+
+**https://shivanshx333.github.io/cris-hmis-voice-scribe/**
+
+The hosted version runs entirely in the browser — no installation required. Open the link on any device with Chrome, Edge, or Safari.
+
+## Features
+
+- **UMID-based patient lookup** with mock railway employee data
+- **Live voice dictation** powered by the browser's Web Speech API
+- **Auto-fill structured form**: chief complaints, diagnosis, medicines table, lab tests, advisory notes
+- **Editable medicines table** with frequency codes (BD / TID / OD / 1-0-1)
+- **A4 printable prescription** with hospital header and signature line
+- **Persistent storage** in the browser's localStorage
+- **Fully offline** after first load — no backend required
+
 ## Stack
 
 - **Frontend:** React 18 + Vite + Tailwind CSS 3 + Lucide Icons
-- **Backend:** FastAPI + SQLAlchemy + SQLite
-- **NLP:** Local rule-based extractor (regex). No external APIs.
-- **Speech:** Browser Web Speech API (no server-side AI required)
+- **NLP:** In-browser rule-based extractor (JavaScript regex)
+- **Speech:** Browser Web Speech API (Chrome / Edge / Safari)
+- **Storage:** Browser localStorage
+- **Hosting:** GitHub Pages (free static hosting)
 
-## Quick Start
+## Local Development
 
-You'll need **Python 3.10+** and **Node.js 18+**.
-
-### 1. Backend (port 8000)
-
-```
-cd backend
-python -m pip install -r requirements.txt
-uvicorn main:app --reload --port 8000
-```
-
-The first run creates `hmis_voice.db` and seeds 4 mock patients.
-
-### 2. Frontend (port 5173)
-
-In a second terminal:
+Requires **Node.js 18+**.
 
 ```
 cd frontend
@@ -35,31 +38,27 @@ npm run dev
 
 Open **http://localhost:5173**
 
+## Optional Backend
+
+A FastAPI backend with SQLite persistence is included in `backend/` for reference and for organizations that prefer server-side storage. The hosted version does not use it — the frontend ships with the full extractor and stores records in localStorage.
+
+To run the optional backend:
+
+```
+cd backend
+python -m pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
+```
+
 ## How to Use
 
 1. **Search for a patient** by UMID (try `RLY-2024-001`) and select from the dropdown.
 2. **Click the mic** in the Voice Dictation Hub and speak a prescription:
    > "Patient presenting with fever and cough for 3 days, diagnosed with viral URI. Prescribed Paracetamol 500mg BD for 5 days. Advised CBC and MP."
-3. Click **Process Transcript**. The Smart Form on the right auto-fills with extracted fields (chief complaints, diagnosis, medicines table, lab tests, advisory).
+3. Click **Process Transcript**. The Smart Form on the right auto-fills with extracted fields.
 4. **Edit** any field as needed — everything is fully editable.
-5. **Save to HMIS** persists the encounter to SQLite.
+5. **Save to HMIS** persists the encounter to localStorage.
 6. **Print** generates an A4 prescription PDF.
-
-## API Endpoints
-
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/api/health` | Health check |
-| POST | `/api/extract` | Run NLP on a transcript |
-| POST | `/api/save` | Persist an encounter |
-| GET | `/api/patient/{umid}` | Lookup patient |
-| GET | `/api/patients?q=` | Search patients |
-
-## Architecture Notes
-
-- **Speech recognition runs in the browser** (Web Speech API) — works offline-style and avoids server-side ML dependencies.
-- **The frontend tries the backend first**, and falls back to a local `mockExtract` if the backend is unreachable. This makes demos work even without the FastAPI server running.
-- **Print layout** is a hidden React component shown only via `@media print` CSS rules.
 
 ## Mock Patients
 
@@ -69,3 +68,7 @@ Open **http://localhost:5173**
 | RLY-2024-002 | Sunita Devi | Station Master | New Delhi |
 | RLY-2024-003 | Amit Sharma | Track Maintainer | Delhi Division |
 | RLY-2024-004 | Priya Singh | Ticket Examiner | Mumbai Central |
+
+## Deployment
+
+Pushes to `master` trigger a GitHub Actions workflow (`.github/workflows/deploy.yml`) that builds the Vite frontend and deploys to GitHub Pages.

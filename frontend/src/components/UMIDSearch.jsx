@@ -29,21 +29,13 @@ export default function UMIDSearch({ patient, setPatient }) {
       return
     }
     const q = query.toLowerCase()
-    let filtered = []
-
-    // Try backend first
-    fetch(`/api/patients?q=${encodeURIComponent(query)}`)
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((data) => setResults(data))
-      .catch(() => {
-        // Fallback to local mock data
-        filtered = MOCK_PATIENTS.filter(
-          (p) =>
-            p.umid.toLowerCase().includes(q) ||
-            p.name.toLowerCase().includes(q)
-        )
-        setResults(filtered)
-      })
+    setResults(
+      MOCK_PATIENTS.filter(
+        (p) =>
+          p.umid.toLowerCase().includes(q) ||
+          p.name.toLowerCase().includes(q)
+      )
+    )
   }, [query])
 
   const selectPatient = (p) => {

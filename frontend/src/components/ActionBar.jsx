@@ -12,26 +12,28 @@ export default function ActionBar({ form, patient, transcript, onClear }) {
 
   const handlePrint = () => window.print()
 
-  const handleSave = async () => {
+  const handleSave = () => {
     try {
-      const response = await fetch('/api/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          umid: patient?.umid || '',
-          transcript,
-          complaints: form.complaints,
-          diagnosis: form.diagnosis,
-          medicines: form.medicines,
-          labs: form.labs,
-          notes: form.notes,
-        }),
-      })
-      if (!response.ok) throw new Error('Save failed')
-      const data = await response.json()
-      showToast('success', `Record saved (Local DB) · ID #${data.id}`)
+      // Persist to browser localStorage so records survive page reloads
+      const STORAGE_KEY = 'cris-hmis-encounters'
+      const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
+      const record = {
+        id: existing.length + 1,
+        umid: patient?.umid || '',
+        patient_name: patient?.name || '',
+        transcript,
+        complaints: form.complaints,
+        diagnosis: form.diagnosis,
+        medicines: form.medicines,
+        labs: form.labs,
+        notes: form.notes,
+        created_at: new Date().toISOString(),
+      }
+      existing.push(record)
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(existing))
+      showToast('success', `Record saved (Local Storage) · ID #${record.id}`)
     } catch (e) {
-      showToast('error', 'Could not save to backend. Save the form manually.')
+      showToast('error', 'Could not save record. Storage may be full.')
     }
   }
 
