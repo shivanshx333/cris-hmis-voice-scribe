@@ -1,7 +1,6 @@
 /**
- * Dashboard.jsx
- * =============
- * Split-screen layout with global keyboard shortcuts and form progress.
+ * Two-pane layout: patient + dictation on the left, form on the right.
+ * Also wires up the global keyboard shortcuts.
  */
 
 import { useState, useEffect, useRef } from 'react'

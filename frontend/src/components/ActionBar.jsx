@@ -1,7 +1,5 @@
 /**
- * ActionBar.jsx
- * =============
- * Bottom sticky bar with Clear, Print, and Save actions.
+ * Bottom bar with Clear / Print / Save buttons.
  */
 
 import { useState, useEffect } from 'react'

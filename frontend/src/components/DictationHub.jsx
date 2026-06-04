@@ -1,11 +1,6 @@
 /**
- * DictationHub.jsx
- * ================
- * Voice dictation hub:
- *  - Web Speech API for real-time transcription
- *  - Live audio level visualization while recording
- *  - Quick prescription template buttons for demos
- *  - Process Transcript runs the in-browser regex extractor
+ * Voice dictation hub: mic button, live transcript via Web Speech API,
+ * audio level bars, quick templates, and the Process button.
  */
 
 import { useState, useEffect, useRef } from 'react'

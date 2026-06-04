@@ -1,7 +1,5 @@
 /**
- * UMIDSearch.jsx
- * ==============
- * Patient lookup by UMID with autocomplete and selectable cards.
+ * Patient search by UMID with autocomplete and a result card.
  */
 
 import { useState, useEffect } from 'react'

@@ -1,10 +1,4 @@
-"""
-database.py
-===========
-SQLite database setup for CRIS HMIS Voice Scribe.
-
-Uses SQLAlchemy ORM for clean model definitions and session management.
-"""
+"""SQLite + SQLAlchemy setup for CRIS HMIS Voice Scribe."""
 
 import json
 from datetime import datetime

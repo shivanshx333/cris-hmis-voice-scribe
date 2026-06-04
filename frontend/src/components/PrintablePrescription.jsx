@@ -1,7 +1,5 @@
 /**
- * PrintablePrescription.jsx
- * =========================
- * Hidden A4 layout shown only when the user prints.
+ * Hidden A4 layout that appears only when printing.
  */
 
 export default function PrintablePrescription({ form, patient }) {

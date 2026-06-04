@@ -1,8 +1,5 @@
 /**
- * App.jsx
- * =======
- * Root component for CRIS HMIS Voice Scribe.
- * Renders the enterprise header and the split-screen Dashboard.
+ * Root component.
  */
 
 import Header from './components/Header.jsx'

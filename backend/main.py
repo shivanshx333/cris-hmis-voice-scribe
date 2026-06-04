@@ -1,14 +1,6 @@
 """
-main.py
-=======
 FastAPI backend for CRIS HMIS Voice Scribe.
-
-Endpoints:
-    GET  /api/health
-    POST /api/extract           — Transcript -> structured fields
-    POST /api/save              — Persist encounter to SQLite
-    GET  /api/patient/{umid}    — Lookup patient by UMID
-    GET  /api/patients          — List all patients (for search autocomplete)
+Handles patient lookup, transcript extraction, and encounter storage.
 """
 
 import json

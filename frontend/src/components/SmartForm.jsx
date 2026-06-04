@@ -1,8 +1,6 @@
 /**
- * SmartForm.jsx
- * =============
- * Editable structured form with section headers.
- * Maps the AI extraction output and flashes auto-filled fields.
+ * Editable medical-encounter form. Sections for complaints,
+ * diagnosis, medicines, labs, and notes. Flashes green on auto-fill.
  */
 
 import { Trash2, Plus, X, Check } from 'lucide-react'

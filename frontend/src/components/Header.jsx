@@ -1,8 +1,5 @@
 /**
- * Header.jsx
- * ==========
- * Top enterprise header bar with live clock, session badge,
- * recent encounters drawer, and keyboard shortcut helper.
+ * Top header bar: clock, history drawer, shortcuts, user info.
  */
 
 import { useEffect, useState, useRef } from 'react'

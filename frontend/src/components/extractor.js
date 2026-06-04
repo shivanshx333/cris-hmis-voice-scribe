@@ -1,11 +1,6 @@
 /**
- * extractor.js
- * ============
- * Rule-based NLP extraction. Ported from backend/extractor.py so the app
- * runs entirely in the browser with no server dependency.
- *
- * Takes a transcript string and returns:
- *   { complaints, diagnosis, medicines[], labs[], notes }
+ * Pulls structured medical fields out of a transcript.
+ * Returns: { complaints, diagnosis, medicines[], labs[], notes }
  */
 
 // --------------------------------------------------------------------------

@@ -1,10 +1,6 @@
 """
-extractor.py
-============
-Rule-based NLP extraction engine.
-
-Takes raw transcript text and extracts structured medical fields using
-regex and keyword matching. Runs entirely offline — no external APIs.
+Extracts structured medical fields from a transcript using
+regex patterns and keyword matching. Runs offline.
 """
 
 import re
